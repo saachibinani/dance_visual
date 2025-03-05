@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "dance_visual",
+			"path": "."
+		},
+		{
+			"name": "visual_pde",
+			"path": "../../Documents/Processing/visual_pde"
+		}
+	],
+	"settings": {}
+}
