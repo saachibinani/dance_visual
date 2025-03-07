@@ -6,7 +6,7 @@ from functools import partial
 
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(1) #for ref, 0 connects to iPhone camera
 
 async def send_motion_data(websocket, path):
     while cap.isOpened():
