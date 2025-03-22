@@ -1,3 +1,5 @@
+"""Open AI call with formatted motion data, outputs selected effects"""
+
 import asyncio
 import websockets
 import json
@@ -10,6 +12,7 @@ import motiontracking.motion_tracking as motion_tracking
 api_key = os.getenv("OPENAI_API_KEY")
 client = openai.OpenAI()
 
+#Graphics library, in the future could have more description on what the graphics actually are
 effect_library = {
     "particle_explosion": {"color": "#FF0000", "size": 10},
     "color_shift": {"hue": 180},
@@ -19,8 +22,10 @@ effect_library = {
 
 motion_data = []
 
+intention = "Portray a sense of love"
+
 async def get_motion_data():
-    """Gets motion data from motion_tracking."""
+    #Gets motion data from motion_tracking
     print("Fetching motion data...")
     try:
         motion_data = motion_tracking.main()
@@ -35,7 +40,7 @@ async def send_to_openai(motion_data):
     if not motion_data:
         print("Error: No motion data available to send to OpenAI.")
         return {}
-
+    #Defining AI's responsibilities and example formatted output
     sys_prompt = f"""You analyze dance movements and suggest background effects at numerous different times. 
     You can only select effects from {effect_library}, and you can suggest changes to color, location, and time.
     Ensure your response is **100% valid JSON**. Never include extra text. Produce at least 7 effects throughout the entirety of the video.
@@ -52,8 +57,9 @@ async def send_to_openai(motion_data):
     ]
     }}
     """
-        
-    user_prompt = f"""Motion data: {json.dumps(motion_data, indent=2)} is provided here. The intention for the effects should be to portray love."""
+
+    #Place to get relevant motion data, as well as user intention.    
+    user_prompt = f"""Motion data: {json.dumps(motion_data, indent=2)} is provided here. The intention for the effects should be {intention}"""
     message = [
         {"role": "system", "content": sys_prompt},
         {"role": "user", "content": user_prompt}
@@ -68,6 +74,7 @@ async def send_to_openai(motion_data):
             raw_response = completion.choices[0].message.content
             print(f"Raw OpenAI response:", raw_response)
 
+            #Error handling for when the data wouldn't be outputted properly
             try:
                 response = json.loads(raw_response.strip())  # Strip whitespace and parse
                 print(f"Successfully parsed OpenAI response: {json.dumps(response, indent=2)}")
@@ -82,7 +89,7 @@ async def send_to_openai(motion_data):
 
             for effect in response.get("effects", []):
                 if "time" not in effect:
-                    effect["time"] = effect.get("frame", 0) / 30  # Estimate time in seconds
+                    effect["time"] = effect.get("frame", 0) / 30  
             
             return effects
 
@@ -93,7 +100,8 @@ async def send_to_openai(motion_data):
             trycount += 1
 
 async def send_effects(websocket):
-    """Ensures AI call completes before sending effects through WebSocket."""
+    #Sends AI output through Websocket
+
     print("Starting motion data collection...")
     motion_data = await get_motion_data()
 
@@ -116,16 +124,16 @@ async def send_effects(websocket):
         await websocket.send(json.dumps({"effects": []}))  # Send empty array
         return
 
-    # Debugging: Print the final effects before sending
+    #Print the final effects before sending for debugging
     print(f"Final effects to be sent: {json.dumps(effects, indent=2)}")
 
     try:
         message = json.dumps({"effects": effects}, ensure_ascii=False)
-        print(f"WebSocket preparing to send message: {message}")  # Debugging before sending
+        print(f"WebSocket preparing to send message: {message}")
 
-        await websocket.send(message)  # Sending the message
+        await websocket.send(message)  #Sending the message
 
-        print("Effects successfully sent to WebSocket.")  # Debugging confirmation
+        print("Effects successfully sent to WebSocket.")  #Debugging confirmation
 
     except websockets.exceptions.ConnectionClosed:
         print("Client disconnected before message was sent.")
@@ -133,16 +141,17 @@ async def send_effects(websocket):
     except Exception as e:
         print(f"Unexpected WebSocket Error: {e}")
 
-    await websocket.close()  # Close WebSocket after sending
+    await websocket.close()  #Close WebSocket after sending so that the data doesn't keep showing up
 
 
 async def main():
+    #setting up websocket
     start_server = await websockets.serve(send_effects, "localhost", 8766)
 
     print("WebSocket server started on ws://localhost:8766")
     
     try:
-        await start_server.wait_closed()  # Keep server running
+        await start_server.wait_closed()  #Keep server running
     except KeyboardInterrupt:
         print("Server shutting down...")
 

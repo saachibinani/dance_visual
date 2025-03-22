@@ -1,4 +1,4 @@
-"""This program tracks different body parts detected from a video, compiles the data, and sends it through a websocket"""
+"""This program tracks different body parts detected from a video and compiles the data"""
 
 import cv2 as cv
 import numpy as np
@@ -7,7 +7,7 @@ import asyncio
 import websockets
 import time
 
-# Define body part mapping
+# Defines which body parts to map
 BODY_PARTS = {
     "RShoulder": 0, "RElbow": 1, "RWrist": 2,
     "LShoulder": 3, "LElbow": 4, "LWrist": 5, "RKnee": 6,
@@ -52,7 +52,7 @@ def get_motion_data(cap):
 
             # Format data as "RWrist,x,y,frame_number"
             data = []
-            for part in BODY_PARTS.keys():  # You can add more body parts
+            for part in BODY_PARTS.keys(): 
                 x, y = points.get(part, (-1, -1))
                 if (x,y) != (-1, -1):
                     data.append(f"{part},{x},{y},{frame_number}")

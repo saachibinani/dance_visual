@@ -1,10 +1,10 @@
 let video;
-let effects = []; // stores AI-selected effects
+let effects = []; //stores AI-selected effects
 let effectObjects = [];
 let recorder;
 let recording = false;
 
-// ** EFFECT CLASSES **
+//Effect classes
 
 class ParticleExplosion {
     constructor(location, color) {
@@ -24,7 +24,7 @@ class ParticleExplosion {
 
     update() {
         for (let p of this.particles) {
-            fill(this.color);
+            fill(this.color, 127);
             noStroke();
             ellipse(p.x, p.y, 10);
             p.x += p.vx;
@@ -79,6 +79,7 @@ class SpiralVortex {
 }
 
 function setup() {
+    //Display video on server
     createCanvas(1400, 600);
     video = createVideo('../sample_dance.mov', videoLoaded);
     video.hide();
@@ -94,7 +95,7 @@ function setup() {
 
 
 let socket;
-
+//Creating the receiving Websocket
 function setupWebSocket() {
     socket = new WebSocket("ws://localhost:8766"); //connect to open_ai_call.py
 
@@ -104,7 +105,7 @@ function setupWebSocket() {
 
     socket.onmessage = function(event) {
         try {
-            console.log("WebSocket received raw data:", event.data);  //  Log the raw message received
+            console.log("WebSocket received raw data:", event.data);  //Log the raw message received
     
             let data = JSON.parse(event.data);
             
@@ -113,7 +114,7 @@ function setupWebSocket() {
                 console.log(" Effects stored:", effects);
                 restartEffects();
             } else {
-                console.error("❌ Unexpected WebSocket data format or empty effects array:", data);
+                console.error("Unexpected WebSocket data format or empty effects array:", data);
             }
     
         } catch (error) {
@@ -132,40 +133,40 @@ function setupWebSocket() {
 
 function videoLoaded() {
     video.loop();
-    video.onended(restartVideo);  // Reset effects when video loops
+    video.onended(restartVideo);  //Reset effects when video loops (not working right now)
 }
 
 function restartVideo(){
-    console.log("🔄 Video restarted. Resetting effects...");
+    console.log("Video restarted.");
     video.time(0);
     video.play();
 }
 
 function draw() {
     background(0);
-    image(video, 0, 0, width, height); // Keep drawing the video
+    image(video, 0, 0, width, height); //Keep drawing the video
 
-    let currentTime = video.time(); // \Get current video time
+    let currentTime = video.time(); //Get current video time
 
-    //  Apply effects at the right time
+    //Apply effects at the right time
     effects.forEach((effect, index) => {
         if (currentTime >= effect.time && !effectObjects[index]) {
             applyEffect(effect, index);
         }
     });
 
-    //  Keep all effects active across video loops
+    //Keep all effects active across video loops
     effectObjects.forEach(effect => {
         if (effect) effect.update();
     });
 }
 
     
-
+//Applying chosen effects
 function applyEffect(effect, index) {
     let { effectType, location, color } = effect;
 
-    //  Prevent duplicate effects
+    //Prevent duplicate effects
     if (effectObjects[index]) return;
 
     console.log("Applying effect:", effectType);
@@ -186,11 +187,11 @@ function applyEffect(effect, index) {
             break;
     }
 
-    effectObjects[index] = effectObj; //  Store effect so it's not duplicated
+    effectObjects[index] = effectObj; //Store effect so it's not duplicated
 }
 
 function restartEffects() {
-    console.log("🔄 Restarting effects...");
+    console.log("Restarting effects.");
     
     effects.forEach((effect, index) => {
         if (!effectObjects[index]) {
